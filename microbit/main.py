@@ -1,5 +1,5 @@
 def on_button_pressed_a():
-    send("NEXT")
+    send("PREV")
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
 # ms
@@ -19,7 +19,7 @@ def on_button_pressed_ab():
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
 def on_button_pressed_b():
-    send("PREV")
+    send("NEXT")
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
 def on_logo_pressed():
