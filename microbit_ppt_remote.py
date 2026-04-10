@@ -2,7 +2,7 @@ import serial
 from pynput.keyboard import Controller as KeyboardController, Key
 from pynput.mouse import Controller as MouseController
 
-PORT = "COM3"
+PORT = "COM4" # ポートの値は環境に合わせて変更してください
 BAUD = 115200
 
 kb = KeyboardController()

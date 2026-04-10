@@ -1,95 +1,106 @@
 # microbit-ppt-remote
 
-micro:bit を PowerPoint のプレゼンターリモコンとして使うための小さなツールです。
-micro:bit のボタン操作をシリアル経由で PC に送り、PC 側スクリプトがキーボード入力に変換して PowerPoint を操作します。
+micro:bit 2台を使って PowerPoint のプレゼンターリモコンを自作するプロジェクトです。
+手持ち側の micro:bit で入力を受け取り、Radio 無線で PC 接続側の micro:bit に送信、PC 側スクリプトがキーボード・マウス操作に変換して PowerPoint を操作します。
+
+## 特徴
+
+- 完全ワイヤレス(手持ち側は電池駆動)
+- スライド送り/戻し、黒画面/白画面トグル
+- 加速度センサーを使ったマウスポインター操作(Wii リモコン風)
+- シェイクジェスチャーでポインターモードをトグル
 
 ## 構成
 
 ```
-[micro:bit] --(USB Serial)--> [PC: Python script] --(Keyboard emulation)--> [PowerPoint]
+[送信機 micro:bit (手持ち・電池駆動)]
+        │ Radio 無線
+        ▼
+[受信機 micro:bit (PC に USB 接続)]
+        │ USB シリアル
+        ▼
+[PC: Python スクリプト]
+        │ キーボード / マウスエミュレーション
+        ▼
+[PowerPoint]
 ```
 
-- **micro:bit 側**: ボタン/ロゴタッチを検知してコマンド文字列をシリアル送信
-- **PC 側**: シリアルを監視し、受信したコマンドに応じて対応するキーを叩く
+送信機が入力を拾って Radio で飛ばし、受信機は受け取った文字列をそのままシリアルに横流しする中継機に徹しています。
 
 ## 操作対応表
 
-| micro:bit の操作 | 送信コマンド | PC 側の動作 | PowerPoint での挙動 |
+| 送信機の操作 | コマンド | PC 側の動作 | PowerPoint での挙動 |
 | --- | --- | --- | --- |
-| B ボタン | `NEXT` | → キー | 次のスライド |
 | A ボタン | `PREV` | ← キー | 前のスライド |
+| B ボタン | `NEXT` | → キー | 次のスライド |
 | A + B 同時押し | `BLACK` | `B` キー | 黒画面トグル |
 | ロゴタッチ | `WHITE` | `W` キー | 白画面トグル |
-
-チャタリング防止のため、micro:bit 側で 350ms のクールタイムを設けています。
+| シェイク | `POINTER_ON` / `POINTER_OFF` | `Ctrl+L` / `Ctrl+A` | レーザーポインターモード切り替え |
+| 傾き(ポインターモード中) | `MOVE:dx,dy` | マウス相対移動 | カーソル移動 |
 
 ## 必要なもの
 
-- micro:bit 本体(v2 推奨)
-- USB ケーブル
+- micro:bit v2 / v2.2 × 2 台
+- USB ケーブル(受信機用)
+- 電池ボックス(送信機用、ワイヤレス運用時)
 - Python 3.x がインストールされた PC
-- PowerPoint(スライドショー実行中の状態)
+- PowerPoint
 
 ## セットアップ
 
-### 1. micro:bit 側の書き込み
-
-`microbit/main.py` を [MakeCode エディタ](https://makecode.microbit.org/) の Python モードに貼り付けて、micro:bit にダウンロードしてください。
-
-### 2. PC 側の依存パッケージをインストール
-
-```bash
-pip install pyserial pynput
-```
-
-### 3. シリアルポートの確認
-
-micro:bit を USB 接続した状態で、デバイスマネージャー等から割り当てられている COM ポート番号を確認してください。
-`pc/microbit_ppt_remote.py` の冒頭にある `PORT` を実際のポート名に書き換えます。
-
-```python
-PORT = "COM4"  # ← ここを自分の環境に合わせて変更
-```
-
-macOS / Linux の場合は `/dev/tty.usbmodemXXXX` のような名前になります。
+1. `microbit/transmitter.py` を送信機側、`microbit/receiver.py` を受信機側に書き込む。Radio グループ番号(デフォルト `42`)は送受信で必ず一致させること
+2. PC 側依存パッケージのインストール: `pip install pyserial pynput`
+3. 受信機を USB 接続し、デバイスマネージャーから COM ポート番号を確認、`pc/microbit_ppt_remote.py` の `PORT` を書き換える
 
 ## 使い方
 
-1. PowerPoint でスライドショーを開始する
-2. PC 側スクリプトを起動する
+1. 受信機 micro:bit を PC に USB 接続
+2. 送信機 micro:bit に電池を接続
+3. PowerPoint でスライドショーを開始
+4. `python pc/microbit_ppt_remote.py` を実行
+5. `Listening: COM4` と表示されたら準備完了
+6. 送信機のボタン/ジェスチャーで PowerPoint を操作
 
-   ```bash
-   python pc/microbit_ppt_remote.py
-   ```
+### ポインターモードの使い方
 
-3. `Listening: COM4` と表示されたら準備完了
-4. micro:bit のボタンを押してスライドを操作する
-
-終了するときは PC 側のターミナルで `Ctrl + C` を押してください。
+送信機をシェイクするとポインターモードに入り、PowerPoint がレーザーポインター表示になります。送信機を傾けるとカーソルが移動します。再度シェイクで解除。ポインターモード中も A/B ボタンでのスライド送りは有効です。
 
 ## ファイル構成
 
 ```
 microbit-ppt-remote/
 ├── pc/
-│   └── microbit_ppt_remote.py   # PC 側の受信スクリプト
+│   └── microbit_ppt_remote.py   # PC 側受信スクリプト
 ├── microbit/
-│   └── main.py                  # micro:bit 側のコード
+│   ├── transmitter.py           # 送信機側
+│   └── receiver.py              # 受信機側
 └── README.md
 ```
 
-## トラブルシューティング
+## チューニングパラメータ
 
-- **`Listening:` の後に何も表示されない**: micro:bit のボタンを押しても反応がない場合、`PORT` の指定が正しいか、他のシリアル通信ソフト(MakeCode の Show Console など)がポートを掴んでいないかを確認してください。
-- **キー入力が PowerPoint に届かない**: PowerPoint がアクティブウィンドウになっているか確認してください。バックグラウンドのままでは送信先になりません。
-- **連打で誤作動する**: micro:bit 側の `cool` の値を大きくすると、より厳しく連打を弾けます。
+送信機側の以下の値を調整することで操作感を変更できます。
 
-## 今後の拡張アイデア
+| 変数 | 現在値 | 説明 |
+| --- | --- | --- |
+| `cool` | 350 | ボタン連打防止のクールタイム(ms) |
+| `move_interval` | 40 | ポインター移動の送信間隔(ms) |
+| `scale` | 30 | 傾き値を割ってカーソル移動量にする係数。小さいほど高速 |
+| `dead_zone` | 100 | この値以下の傾きは無視(静止時のブレ対策) |
+| `sample_count` | 4 | 加速度値の移動平均サンプル数。多いほど滑らか、少ないほど応答速い |
 
-- 加速度センサーを使ったジェスチャー操作
-- micro:bit の Radio 機能による無線化(送信機 + 受信機の 2 台構成)
-- LED マトリクスへの経過時間表示
-- 音量・メディアキー操作の追加
+## 既知の制限
+
+- ポインターモード中は Radio 送信頻度が高く、まれにボタン操作が取りこぼされることがある
+- 大きく動かした際にカーソルが若干カクつくことがある(加速度センサーの仕様上の制約)
+- Radio 通信距離は屋内数メートル程度を想定(同一教室内なら十分)
+
+## 今後の改良候補
+
+- ジャイロセンサー(MPU6050 等)を外付けして姿勢推定精度を向上
+- BLE HID 対応マイコン(Seeed XIAO nRF52840 等)への移行で PC 側スクリプト不要化
+- 3D プリント筐体で物理的な持ちやすさを向上
+- 振動モーターによる触覚フィードバック
 
 ## ライセンス
 
