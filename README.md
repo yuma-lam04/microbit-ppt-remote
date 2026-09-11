@@ -50,14 +50,14 @@ micro:bit 2台を使って PowerPoint のプレゼンターリモコンを自作
 
 1. `microbit/transmitter.py` を送信機側、`microbit/receiver.py` を受信機側に書き込む。Radio グループ番号(デフォルト `42`)は送受信で必ず一致させること
 2. PC 側依存パッケージのインストール: `pip install pyserial pynput`
-3. 受信機を USB 接続し、デバイスマネージャーから COM ポート番号を確認、`pc/microbit_ppt_remote.py` の `PORT` を書き換える
+3. 受信機を USB 接続し、デバイスマネージャーから COM ポート番号を確認、`microbit_ppt_remote.py` の `PORT` を書き換える
 
 ## 使い方
 
 1. 受信機 micro:bit を PC に USB 接続
 2. 送信機 micro:bit に電池を接続
 3. PowerPoint でスライドショーを開始
-4. `python pc/microbit_ppt_remote.py` を実行
+4. `python microbit_ppt_remote.py` を実行
 5. `Listening: COM4` と表示されたら準備完了
 6. 送信機のボタン/ジェスチャーで PowerPoint を操作
 
@@ -69,8 +69,7 @@ micro:bit 2台を使って PowerPoint のプレゼンターリモコンを自作
 
 ```
 microbit-ppt-remote/
-├── pc/
-│   └── microbit_ppt_remote.py   # PC 側受信スクリプト
+├── microbit_ppt_remote.py       # PC 側受信スクリプト
 ├── microbit/
 │   ├── transmitter.py           # 送信機側
 │   └── receiver.py              # 受信機側
@@ -84,8 +83,8 @@ microbit-ppt-remote/
 | 変数 | 現在値 | 説明 |
 | --- | --- | --- |
 | `cool` | 350 | ボタン連打防止のクールタイム(ms) |
-| `move_interval` | 40 | ポインター移動の送信間隔(ms) |
-| `scale` | 30 | 傾き値を割ってカーソル移動量にする係数。小さいほど高速 |
+| `move_interval` | 25 | ポインター移動の送信間隔(ms) |
+| `scale` | 40 | 傾き値を割ってカーソル移動量にする係数。小さいほど高速 |
 | `dead_zone` | 100 | この値以下の傾きは無視(静止時のブレ対策) |
 | `sample_count` | 4 | 加速度値の移動平均サンプル数。多いほど滑らか、少ないほど応答速い |
 
