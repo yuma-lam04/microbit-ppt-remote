@@ -88,9 +88,7 @@ radio.set_transmit_power(7)
 # メインループ(ポインター移動の連続送信)
 
 def on_forever():
-    global now_ms2, last_move, sample_index, x2, y2, dx2, dy2
-    dy = 0
-    dx = 0
+    global now_ms2, last_move, sample_index, x2, y2, dx2, dy2, last_dx, last_dy
     if not (pointer_mode):
         return
     now_ms2 = control.millis()
@@ -105,8 +103,8 @@ def on_forever():
     y_samples[sample_index] = input.acceleration(Dimension.Y)
     sample_index = (sample_index + 1) % sample_count
     # 平均を計算(sumは使えなかったため、素直に)
-    x2 = x_samples[0] + x_samples[1] + x_samples[2] + Math.idiv(x_samples[3], sample_count)
-    y2 = y_samples[0] + y_samples[1] + y_samples[2] + Math.idiv(y_samples[3], sample_count)
+    x2 = Math.idiv(x_samples[0] + x_samples[1] + x_samples[2] + x_samples[3], sample_count)
+    y2 = Math.idiv(y_samples[0] + y_samples[1] + y_samples[2] + y_samples[3], sample_count)
     # デッドゾーン適用
     if abs(x2) < dead_zone:
         x2 = 0
@@ -116,9 +114,9 @@ def on_forever():
         return
     dx2 = Math.idiv(x2, scale)
     dy2 = Math.idiv(y2, scale)
-    if dx == last_dx2 and dy == last_dy2:
+    if dx2 == last_dx and dy2 == last_dy:
         return
-    last_dx2 = dx
-    last_dy2 = dy
+    last_dx = dx2
+    last_dy = dy2
     radio.send_string("MOVE:" + ("" + str(dx2)) + "," + ("" + str(dy2)))
 basic.forever(on_forever)
